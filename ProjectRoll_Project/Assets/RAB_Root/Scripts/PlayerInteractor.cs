@@ -13,7 +13,7 @@ public class PlayerInteractor : MonoBehaviour
     public int sceneToLoad = 2;
 
     [Header("Sound References")]
-    public PlayerController playerCont; //Ref als cript que contiene las llamadas a sonidos
+    public PlayerController playerCont; //Ref al script que contiene las llamadas a sonidos
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()

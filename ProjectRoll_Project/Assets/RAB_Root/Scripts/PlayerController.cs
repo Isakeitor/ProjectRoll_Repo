@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -22,10 +23,20 @@ public class PlayerController : MonoBehaviour
     [Header("Sound Configuration")]
     public AudioClip[] soundCollection;
 
+    [Header("Lives System")]
+    public int lives = 3;
+    public TMP_Text livesText; //Texto para mostrar vidas
+
+    [Header("Game Over")]
+    public GameObject gameOverPanel; //Texto de "Has perdido"
+
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        lives = 3;
+        lives = 3;
+        gameOverPanel.SetActive(false); //Oculta el panel al inicio
     }
 
     // Update is called once per frame
@@ -35,8 +46,10 @@ public class PlayerController : MonoBehaviour
         //Respawn por altura
         if (transform.position.y <= fallLimit)
         {
+            lives -= 1; ;
             Respawn();
         }
+        livesText.text = "Lives: " + lives;
     }
 
     private void FixedUpdate()
@@ -53,6 +66,7 @@ public class PlayerController : MonoBehaviour
         }
         if (collision.gameObject.CompareTag("Obstacle"))
         {
+            lives -= 1;
             Respawn();
         }
     }
@@ -66,11 +80,30 @@ public class PlayerController : MonoBehaviour
         transform.Translate(Vector3.forward * speed * moveInput.y * Time.deltaTime);
     }
 
+    void LoseLife()
+    {
+        lives--;
+        livesText.text = "Lives: " + lives;
+        PlaySFX(2);
+
+        if (lives <= 0)
+        {
+            GameOver(); //Llama a GameOver() cuando las vidas son 0
+        }
+    }
+
+    void GameOver() //Muestra el panel y pausa el juego
+    {
+        gameOverPanel.SetActive(true);
+        Time.timeScale = 0f;
+    }
+
     void PhysicalMovement()
     {
         //Añadir una fuerza al rigidbody = (Dirección * velocidad * input)
-        playerRb.AddForce(Vector3.right * speed * moveInput.x);
-        playerRb.AddForce(Vector3.forward * speed * moveInput.y);
+        //playerRb.linearVelocity = new Vector3 (moveInput.x * speed, playerRb.linearVelocity.y, moveInput.y * speed);
+        playerRb.AddForce(Vector3.right * speed * moveInput.x, ForceMode.VelocityChange);
+        playerRb.AddForce(Vector3.forward * speed * moveInput.y, ForceMode.VelocityChange);
     }
 
     void Jump()
