@@ -72,6 +72,7 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Health"))
         {
             lives += 1;
+            collision.gameObject.SetActive(false);
         }
     }
 
