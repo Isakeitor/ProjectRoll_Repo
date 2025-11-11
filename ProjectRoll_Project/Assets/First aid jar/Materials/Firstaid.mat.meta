@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 588ed556445441347a8c5664dc6c17b3
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 285565
+  packageName: First aid jar
+  packageVersion: 1.0
+  assetPath: Assets/First aid jar/Materials/Firstaid.mat
+  uploadId: 665394
