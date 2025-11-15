@@ -15,7 +15,7 @@ namespace Patterns.Singleton
                 if (_instance == null)
                 {
                     //If there isn't find the instance and set it.
-                    _instance = FindObjectOfType<T>();
+                    _instance = FindFirstObjectByType<T>();
                 }
                 return _instance;
             }
