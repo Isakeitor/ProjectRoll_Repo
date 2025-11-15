@@ -5,41 +5,40 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("Editor References")]
+    [Header("Physics")]
     public Rigidbody playerRb;
     public AudioSource playerAudio;
 
-    [Header("Movement Parameters")]
+    [Header("Movement")]
     public float speed = 10f;
     private Vector2 moveInput;
 
-    [Header("Jump Parameters")]
+    [Header("Jump")]
     public float jumpForce = 6f;
     public bool isGrounded = true;
 
     [Header("Respawn System")]
     public float fallLimit = -10f;
-    public Transform respawnPoint;
+    public Transform respawnPoint;     // ← ESTE ES EL RESPWAN INICIAL Y SE USA SIEMPRE
 
-    [Header("Sound Configuration")]
-    public AudioClip[] soundCollection;
-
-    [Header("Lives System")]
+    [Header("Lives")]
     public int lives = 3;
     public TMP_Text livesText;
 
-    [Header("Game Over")]
+    [Header("Game Over UI")]
     public GameObject gameOverPanel;
+
+    [Header("Sound")]
+    public AudioClip[] soundCollection;
 
     void Awake()
     {
         if (!playerRb) playerRb = GetComponent<Rigidbody>();
-        playerRb.freezeRotation = false;   // la pelota debe poder rodar
+        playerRb.freezeRotation = false; // la pelota debe poder rodar
     }
 
     void Start()
     {
-        lives = 3;
         gameOverPanel.SetActive(false);
         UpdateLivesUI();
     }
@@ -77,17 +76,33 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Checkpoint"))
+        {
+            // obtener componente CHECKPOINT y su transform asociado
+            Checkpoint cp = other.GetComponent<Checkpoint>();
+            if (cp != null && cp.respawnPoint != null)
+            {
+                // ASIGNAR el respawnPoint del jugador al transform del checkpoint (antes de desactivar)
+                respawnPoint = cp.respawnPoint;
+            }
+            // desactivar pickup solo *después* de leer el respawnPoint
+            other.gameObject.SetActive(false);
+            PlaySFX(1);
+        }
+    }
+
     #region Movement
 
     void MovePlayer()
     {
-        // FUERZA DE MOVIMIENTO TIPO PELOTA REAL
         Vector3 force = new Vector3(moveInput.x, 0, moveInput.y) * speed;
         playerRb.AddForce(force, ForceMode.Force);
 
-        // LIMITADOR DE VELOCIDAD HORIZONTAL
         Vector3 horizontalVel = new Vector3(playerRb.linearVelocity.x, 0, playerRb.linearVelocity.z);
         float maxSpeed = 45f;
+
         if (horizontalVel.magnitude > maxSpeed)
         {
             horizontalVel = horizontalVel.normalized * maxSpeed;
@@ -103,12 +118,20 @@ public class PlayerController : MonoBehaviour
 
     void Respawn()
     {
-        // RESETEOS CRÍTICOS PARA EVITAR BUGS
+        // reset físico seguro
         playerRb.linearVelocity = Vector3.zero;
         playerRb.angularVelocity = Vector3.zero;
-        playerRb.position = respawnPoint.position;
-        isGrounded = true;
 
+        // usar transform.position para teletransportar y evitar problemas con physics-snap
+        if (respawnPoint != null)
+            transform.position = respawnPoint.position;
+        else
+            Debug.LogWarning("Respawn: respawnPoint null!");
+
+        // sincronizar Rigidbody con la nueva posición (por si acaso)
+        playerRb.position = transform.position;
+
+        isGrounded = true;
         PlaySFX(2);
     }
 
@@ -128,7 +151,7 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region Lives and Game Over
+    #region Lives
 
     public void LoseLife()
     {
@@ -137,15 +160,7 @@ public class PlayerController : MonoBehaviour
         PlaySFX(2);
 
         if (lives <= 0)
-        {
             GameOver();
-        }
-    }
-
-    void GameOver()
-    {
-        gameOverPanel.SetActive(true);
-        Time.timeScale = 0f;
     }
 
     void UpdateLivesUI()
@@ -154,14 +169,20 @@ public class PlayerController : MonoBehaviour
             livesText.text = "Lives: " + lives;
     }
 
+    void GameOver()
+    {
+        gameOverPanel.SetActive(true);
+        Time.timeScale = 0f;
+    }
+
     #endregion
 
     #region Audio
 
-    public void PlaySFX(int soundToPlay)
+    public void PlaySFX(int index)
     {
-        if (playerAudio != null && soundCollection.Length > soundToPlay)
-            playerAudio.PlayOneShot(soundCollection[soundToPlay]);
+        if (playerAudio != null && soundCollection.Length > index)
+            playerAudio.PlayOneShot(soundCollection[index]);
     }
 
     #endregion
