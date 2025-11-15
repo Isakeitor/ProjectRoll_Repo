@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Editor References")]
@@ -10,7 +11,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Movement Parameters")]
     public float speed = 10f;
-    public Vector2 moveInput;
+    private Vector2 moveInput;
 
     [Header("Jump Parameters")]
     public float jumpForce = 6f;
@@ -30,28 +31,31 @@ public class PlayerController : MonoBehaviour
     [Header("Game Over")]
     public GameObject gameOverPanel;
 
+    void Awake()
+    {
+        if (!playerRb) playerRb = GetComponent<Rigidbody>();
+        playerRb.freezeRotation = false;   // la pelota debe poder rodar
+    }
+
     void Start()
     {
         lives = 3;
         gameOverPanel.SetActive(false);
+        UpdateLivesUI();
     }
 
     void Update()
     {
-        // Respawn por caÌda
         if (transform.position.y <= fallLimit)
         {
             LoseLife();
             Respawn();
         }
-
-        if (livesText != null)
-            livesText.text = "Lives: " + lives;
     }
 
     private void FixedUpdate()
     {
-        PhysicalMovement();
+        MovePlayer();
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -69,15 +73,26 @@ public class PlayerController : MonoBehaviour
         {
             lives++;
             collision.gameObject.SetActive(false);
+            UpdateLivesUI();
         }
     }
 
     #region Movement
 
-    void PhysicalMovement()
+    void MovePlayer()
     {
-        playerRb.AddForce(Vector3.right * speed * moveInput.x, ForceMode.VelocityChange);
-        playerRb.AddForce(Vector3.forward * speed * moveInput.y, ForceMode.VelocityChange);
+        // FUERZA DE MOVIMIENTO TIPO PELOTA REAL
+        Vector3 force = new Vector3(moveInput.x, 0, moveInput.y) * speed;
+        playerRb.AddForce(force, ForceMode.Force);
+
+        // LIMITADOR DE VELOCIDAD HORIZONTAL
+        Vector3 horizontalVel = new Vector3(playerRb.linearVelocity.x, 0, playerRb.linearVelocity.z);
+        float maxSpeed = 45f;
+        if (horizontalVel.magnitude > maxSpeed)
+        {
+            horizontalVel = horizontalVel.normalized * maxSpeed;
+            playerRb.linearVelocity = new Vector3(horizontalVel.x, playerRb.linearVelocity.y, horizontalVel.z);
+        }
     }
 
     void Jump()
@@ -88,8 +103,12 @@ public class PlayerController : MonoBehaviour
 
     void Respawn()
     {
-        transform.position = respawnPoint.position;
+        // RESETEOS CR√çTICOS PARA EVITAR BUGS
         playerRb.linearVelocity = Vector3.zero;
+        playerRb.angularVelocity = Vector3.zero;
+        playerRb.position = respawnPoint.position;
+        isGrounded = true;
+
         PlaySFX(2);
     }
 
@@ -114,7 +133,7 @@ public class PlayerController : MonoBehaviour
     public void LoseLife()
     {
         lives--;
-        livesText.text = "Lives: " + lives;
+        UpdateLivesUI();
         PlaySFX(2);
 
         if (lives <= 0)
@@ -129,13 +148,20 @@ public class PlayerController : MonoBehaviour
         Time.timeScale = 0f;
     }
 
+    void UpdateLivesUI()
+    {
+        if (livesText != null)
+            livesText.text = "Lives: " + lives;
+    }
+
     #endregion
 
     #region Audio
 
     public void PlaySFX(int soundToPlay)
     {
-        playerAudio.PlayOneShot(soundCollection[soundToPlay]);
+        if (playerAudio != null && soundCollection.Length > soundToPlay)
+            playerAudio.PlayOneShot(soundCollection[soundToPlay]);
     }
 
     #endregion
