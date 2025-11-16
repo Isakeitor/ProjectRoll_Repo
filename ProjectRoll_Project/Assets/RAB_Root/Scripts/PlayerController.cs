@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
@@ -19,32 +20,30 @@ public class PlayerController : MonoBehaviour
 
     [Header("Respawn System")]
     public float fallLimit = -10f;
-    public Transform respawnPoint;     // ← ESTE ES EL RESPWAN INICIAL Y SE USA SIEMPRE
+    public Transform respawnPoint;
 
     [Header("Lives")]
     public int lives = 3;
     public TMP_Text livesText;
 
-    [Header("Game Over UI")]
-    public GameObject gameOverPanel;
+    [Header("Scene Management")]
+    public int gameOverScene = 0;
 
     [Header("Sound")]
     public AudioClip[] soundCollection;
 
+    private bool isDead = false; // ← evita seguir perdiendo vidas después de 0
+
     void Awake()
     {
         if (!playerRb) playerRb = GetComponent<Rigidbody>();
-        playerRb.freezeRotation = false; // la pelota debe poder rodar
-    }
-
-    void Start()
-    {
-        gameOverPanel.SetActive(false);
-        UpdateLivesUI();
+        playerRb.freezeRotation = false;
     }
 
     void Update()
     {
+        if (isDead) return; // evita perder vidas tras game over
+
         if (transform.position.y <= fallLimit)
         {
             LoseLife();
@@ -54,11 +53,14 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        MovePlayer();
+        if (!isDead)
+            MovePlayer();
     }
 
     private void OnCollisionEnter(Collision collision)
     {
+        if (isDead) return;
+
         if (collision.gameObject.CompareTag("Ground"))
             isGrounded = true;
 
@@ -78,16 +80,16 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (isDead) return;
+
         if (other.CompareTag("Checkpoint"))
         {
-            // obtener componente CHECKPOINT y su transform asociado
             Checkpoint cp = other.GetComponent<Checkpoint>();
             if (cp != null && cp.respawnPoint != null)
             {
-                // ASIGNAR el respawnPoint del jugador al transform del checkpoint (antes de desactivar)
                 respawnPoint = cp.respawnPoint;
             }
-            // desactivar pickup solo *después* de leer el respawnPoint
+
             other.gameObject.SetActive(false);
             PlaySFX(1);
         }
@@ -118,17 +120,12 @@ public class PlayerController : MonoBehaviour
 
     void Respawn()
     {
-        // reset físico seguro
         playerRb.linearVelocity = Vector3.zero;
         playerRb.angularVelocity = Vector3.zero;
 
-        // usar transform.position para teletransportar y evitar problemas con physics-snap
         if (respawnPoint != null)
             transform.position = respawnPoint.position;
-        else
-            Debug.LogWarning("Respawn: respawnPoint null!");
 
-        // sincronizar Rigidbody con la nueva posición (por si acaso)
         playerRb.position = transform.position;
 
         isGrounded = true;
@@ -137,12 +134,13 @@ public class PlayerController : MonoBehaviour
 
     public void OnMove(InputAction.CallbackContext context)
     {
-        moveInput = context.ReadValue<Vector2>();
+        if (!isDead)
+            moveInput = context.ReadValue<Vector2>();
     }
 
     public void OnJump(InputAction.CallbackContext context)
     {
-        if (context.performed && isGrounded)
+        if (!isDead && context.performed && isGrounded)
         {
             isGrounded = false;
             Jump();
@@ -155,6 +153,8 @@ public class PlayerController : MonoBehaviour
 
     public void LoseLife()
     {
+        if (isDead) return;
+
         lives--;
         UpdateLivesUI();
         PlaySFX(2);
@@ -171,8 +171,8 @@ public class PlayerController : MonoBehaviour
 
     void GameOver()
     {
-        gameOverPanel.SetActive(true);
-        Time.timeScale = 0f;
+        isDead = true;  // ← detiene toda pérdida de vidas inmediata
+        SceneManager.LoadScene(gameOverScene);
     }
 
     #endregion

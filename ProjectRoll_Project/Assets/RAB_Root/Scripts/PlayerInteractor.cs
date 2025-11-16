@@ -6,7 +6,7 @@ public class PlayerInteractor : MonoBehaviour
 {
     [Header("Points System")]
     public int points; //Puntuación actual del player (en juego)
-    public int winPoints = 1; //Puntuación a alcanzar para completar el nivel
+    public int winPoints = 10; //Puntuación a alcanzar para completar el nivel
     public TMP_Text pointsText; //Ref al texto de puntos para que cambie dinámicamente
 
     [Header("Scene Management")]
