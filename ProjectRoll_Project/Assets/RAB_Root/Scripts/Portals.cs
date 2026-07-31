@@ -9,6 +9,8 @@ public class Portal : MonoBehaviour
     {
         if (puedeTeletransportar && destino != null && other.CompareTag("Player"))
         {
+            AudioManager.Instance.PlayPortal();
+
             destino.puedeTeletransportar = false;
             other.transform.position = destino.transform.position + destino.transform.forward * 2f;
         }

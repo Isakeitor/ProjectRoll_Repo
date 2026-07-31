@@ -8,6 +8,11 @@ public class SceneManagement : MonoBehaviour
         SceneManager.LoadScene(sceneToLoad);
     }
 
+    public void PlayButtonClick()
+    {
+        AudioManager.Instance.PlayButtonClick();
+    }
+
     public void ExitGame()
     {
         Debug.Log("Has cerrado el juego.");

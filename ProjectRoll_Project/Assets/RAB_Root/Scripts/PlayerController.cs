@@ -8,7 +8,6 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Physics")]
     public Rigidbody playerRb;
-    public AudioSource playerAudio;
 
     [Header("Movement")]
     public float speed = 10f;
@@ -26,23 +25,25 @@ public class PlayerController : MonoBehaviour
     public int lives = 3;
     public TMP_Text livesText;
 
+    [Header("Damage")]
+    public float damageCooldown = 1f;
+    private float lastDamageTime = -1f;
+
     [Header("Scene Management")]
     public int gameOverScene = 0;
 
-    [Header("Sound")]
-    public AudioClip[] soundCollection;
-
-    private bool isDead = false; // ← evita seguir perdiendo vidas después de 0
+    private bool isDead = false;
 
     void Awake()
     {
         if (!playerRb) playerRb = GetComponent<Rigidbody>();
         playerRb.freezeRotation = false;
+        UpdateLivesUI();
     }
 
     void Update()
     {
-        if (isDead) return; // evita perder vidas tras game over
+        if (isDead) return;
 
         if (transform.position.y <= fallLimit)
         {
@@ -75,23 +76,8 @@ public class PlayerController : MonoBehaviour
             lives++;
             collision.gameObject.SetActive(false);
             UpdateLivesUI();
-        }
-    }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (isDead) return;
-
-        if (other.CompareTag("Checkpoint"))
-        {
-            Checkpoint cp = other.GetComponent<Checkpoint>();
-            if (cp != null && cp.respawnPoint != null)
-            {
-                respawnPoint = cp.respawnPoint;
-            }
-
-            other.gameObject.SetActive(false);
-            PlaySFX(1);
+            AudioManager.Instance.PlayBonus();
         }
     }
 
@@ -115,7 +101,7 @@ public class PlayerController : MonoBehaviour
     void Jump()
     {
         playerRb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        PlaySFX(0);
+        AudioManager.Instance.PlayJump();
     }
 
     void Respawn()
@@ -129,7 +115,6 @@ public class PlayerController : MonoBehaviour
         playerRb.position = transform.position;
 
         isGrounded = true;
-        PlaySFX(2);
     }
 
     public void OnMove(InputAction.CallbackContext context)
@@ -155,9 +140,13 @@ public class PlayerController : MonoBehaviour
     {
         if (isDead) return;
 
+        if (Time.time - lastDamageTime < damageCooldown)
+            return;
+
+        lastDamageTime = Time.time;
+
         lives--;
         UpdateLivesUI();
-        PlaySFX(2);
 
         if (lives <= 0)
             GameOver();
@@ -166,23 +155,13 @@ public class PlayerController : MonoBehaviour
     void UpdateLivesUI()
     {
         if (livesText != null)
-            livesText.text = "Lives: " + lives;
+            livesText.text = ": " + lives;
     }
 
     void GameOver()
     {
-        isDead = true;  // ← detiene toda pérdida de vidas inmediata
+        isDead = true;
         SceneManager.LoadScene(gameOverScene);
-    }
-
-    #endregion
-
-    #region Audio
-
-    public void PlaySFX(int index)
-    {
-        if (playerAudio != null && soundCollection.Length > index)
-            playerAudio.PlayOneShot(soundCollection[index]);
     }
 
     #endregion

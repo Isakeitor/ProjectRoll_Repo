@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 4e329abfb7ebe14448a032d19a6a4026
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - audioSource: {instanceID: 0}
+  - buttonClick: {fileID: 8300000, guid: e974e3de5e9bb8844acbd392b0bda5b8, type: 3}
+  - jump: {fileID: 8300000, guid: 616e0e7ce07a2514a92bf134d18baa85, type: 3}
+  - enemyShoot: {fileID: 8300000, guid: 91614de77d2420a4684beaf2f75bdda6, type: 3}
+  - death: {fileID: 8300000, guid: ece2e033504f8e64d994266b37bdc4d5, type: 3}
+  - pickup: {fileID: 8300000, guid: 4b258be928963de4c9b2a97c95ee8130, type: 3}
+  - portal: {fileID: 8300000, guid: 70254a16349d5394aaaa6cc644d116ce, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

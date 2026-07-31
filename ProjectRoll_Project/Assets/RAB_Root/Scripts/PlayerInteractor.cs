@@ -5,20 +5,17 @@ using UnityEngine.SceneManagement;
 public class PlayerInteractor : MonoBehaviour
 {
     [Header("Points System")]
-    public int points; //Puntuación actual del player (en juego)
-    public int winPoints = 10; //Puntuación a alcanzar para completar el nivel
-    public TMP_Text pointsText; //Ref al texto de puntos para que cambie dinámicamente
+    public int points;
+    public int winPoints = 10;
+    public TMP_Text pointsText;
 
     [Header("Scene Management")]
     public int sceneToLoad = 2;
 
-    [Header("Sound References")]
-    public PlayerController playerCont; //Ref al script que contiene las llamadas a sonidos
-
     void Start()
     {
         points = 0;
-        UpdatePointsText();
+        UpdateObjectiveText();
     }
 
     void Update()
@@ -28,26 +25,28 @@ public class PlayerInteractor : MonoBehaviour
             SceneManager.LoadScene(sceneToLoad);
         }
 
-        UpdatePointsText();
+        UpdateObjectiveText();
     }
 
-    private void UpdatePointsText()
+    private void UpdateObjectiveText()
     {
         if (pointsText != null)
         {
-            pointsText.text = "Points: " + points.ToString();
+            int remaining = Mathf.Max(0, winPoints - points);
+            pointsText.text = "Collect " + remaining + " red cards";
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        // PICKUP DE PUNTOS
-        if (other.gameObject.CompareTag("PickUp"))
+        if (other.CompareTag("PickUp"))
         {
-            points += 1;
+            points++;
             other.gameObject.SetActive(false);
-            if (playerCont != null)
-                playerCont.PlaySFX(1); //sonido de recoger puntos
+
+            AudioManager.Instance.PlayPickup();
+
+            UpdateObjectiveText();
         }
     }
 }

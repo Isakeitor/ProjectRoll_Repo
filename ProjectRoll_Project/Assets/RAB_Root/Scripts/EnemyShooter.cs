@@ -62,6 +62,7 @@ public class EnemyShooter : MonoBehaviour
         Quaternion rot = Quaternion.LookRotation(dir);
 
         Instantiate(bulletPrefab, firePoint.position, rot);
+        AudioManager.Instance.PlayEnemyShoot();
     }
 
     private void OnDrawGizmosSelected()
